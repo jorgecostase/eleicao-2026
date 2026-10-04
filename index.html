@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apuração Eleições 2026 • Projeção em Tempo Real</title>
+  <!-- Tailwind CSS para estilização moderna e responsiva -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700;800;900&display=swap');
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #090d16;
+      color: #f1f5f9;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Animação suave para preenchimento de barras */
+    .smooth-bar {
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-start p-2 sm:p-3 md:p-4 antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Container Central: Mais Largo e Verticalmente Compacto -->
+  <main class="w-full max-w-[1380px] mx-auto space-y-2 sm:space-y-2.5">
+
+    <!-- 1. Topo: Cabeçalho Broadcast Neutro Compacto -->
+    <header class="bg-slate-900/90 border border-slate-800 rounded-lg px-3.5 py-2 shadow-md flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse shadow-sm shadow-emerald-400/50 flex-shrink-0"></span>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg md:text-xl font-black text-white tracking-tight leading-none">
+              Eleições Presidenciais 2026 • Projeção Territorial Fixa
+            </h1>
+            <span class="hidden sm:inline-block px-2 py-0.5 bg-blue-950/80 border border-blue-800/60 rounded text-[10px] font-bold text-blue-400 uppercase tracking-wider">
+              TSE CDN
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-0.5 hidden md:block">
+            Metodologia Híbrida: Seções no Exterior via BU • Brasil por Zonas Eleitorais
+          </p>
+        </div>
+      </div>
+
+      <!-- Relógio e Status da Conexão Inline -->
+      <div class="flex items-center gap-3 bg-slate-950/90 border border-slate-800/80 rounded-md px-3 py-1 flex-shrink-0">
+        <div class="text-right">
+          <div class="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-none">Horário Oficial</div>
+          <div id="relogio" class="text-lg sm:text-xl font-black text-cyan-400 font-mono leading-none mt-0.5">--:--:--</div>
+        </div>
+        <div class="h-6 w-px bg-slate-800"></div>
+        <div class="text-right">
+          <div class="text-[9px] font-bold uppercase tracking-wider text-slate-400 leading-none">CDN Rate</div>
+          <div id="taxaReq" class="text-xs sm:text-sm font-bold text-slate-200 font-mono leading-none mt-0.5">0.0 req/s</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Barra de Progresso Única: Eleitores Apurados em Relação ao Total -->
+    <section class="bg-slate-900/85 border border-slate-800 rounded-lg px-4 py-2 shadow-sm space-y-1.5">
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 font-bold text-slate-300">
+          <span class="text-cyan-400 text-xs">●</span>
+          <span class="text-xs sm:text-sm uppercase tracking-wide text-slate-400">Eleitores Apurados:</span>
+          <span id="eleitoresTexto" class="font-black text-white font-mono text-sm sm:text-base md:text-lg">0 / 158.745.502</span>
+        </div>
+        <div class="text-base sm:text-lg md:text-xl font-black text-cyan-400 font-mono text-right" id="eleitoresPct">
+          0,00%
+        </div>
+      </div>
+      
+      <!-- Barra Visual -->
+      <div class="w-full bg-slate-950 rounded-full h-2.5 sm:h-3 p-0.5 border border-slate-800 overflow-hidden">
+        <div id="barraProgresso" class="bg-gradient-to-r from-blue-600 via-cyan-500 to-sky-400 h-full rounded-full smooth-bar" style="width: 0.1%;"></div>
+      </div>
+    </section>
+
+    <!-- 3. Tabela Principal de Candidatos e Projeção -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-lg shadow-lg overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <!-- Linha 1 do Cabeçalho: Agrupamentos -->
+            <tr class="bg-slate-950/80 border-b border-slate-800 text-[11px] sm:text-xs font-black tracking-wider uppercase">
+              <th colspan="2" class="py-1 px-3 sm:px-4"></th>
+              <th colspan="2" class="py-1 px-3 sm:px-4 text-center border-l border-slate-800 text-blue-400 bg-blue-950/20">
+                DELTA (Apurados - Esperados)
+              </th>
+              <th colspan="2" class="py-1 px-3 sm:px-4 text-center border-l border-slate-800 text-cyan-400 bg-cyan-950/20">
+                PROJEÇÃO FIXA
+              </th>
+            </tr>
+            <!-- Linha 2 do Cabeçalho: Subcolunas -->
+            <tr class="bg-slate-950 border-b border-slate-800 text-xs sm:text-sm font-bold text-slate-300">
+              <th class="py-1.5 px-3 sm:px-4">CANDIDATO</th>
+              <th class="py-1.5 px-3 sm:px-4 text-right">APURADOS</th>
+              <th class="py-1.5 px-3 sm:px-4 text-right border-l border-slate-800 text-slate-200">DELTA VOTOS</th>
+              <th class="py-1.5 px-3 sm:px-4 text-right text-slate-200">DELTA P.P.</th>
+              <th class="py-1.5 px-3 sm:px-4 text-right border-l border-slate-800 text-slate-200">PROJ. VOTOS</th>
+              <th class="py-1.5 px-3 sm:px-4 text-right text-slate-200">% PROJETADA</th>
+            </tr>
+          </thead>
+          <tbody id="tabelaCorpo" class="divide-y divide-slate-800/70 text-sm font-medium">
+            <!-- Linhas dinâmicas via JS -->
+            <tr class="animate-pulse text-slate-500">
+              <td colspan="6" class="py-6 text-center">Carregando dados da apuração em tempo real...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rodapé da Tabela: Linha de Observações -->
+      <div class="bg-slate-950/90 px-3.5 py-1.5 border-t border-slate-800 text-[11px] sm:text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-1">
+        <div id="obsRodape">
+          *B+N: Brancos e nulos somados; ABS.: Abstenções, ausência; DELTA: apurados - esperados
+        </div>
+        <div class="text-[11px] text-slate-400 font-medium">
+          * B+N: sobre comparecimento | ** ABS: sobre eleitores aptos
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Quadro de Cenários de Turno (Na mesma tela, sem abas, alinhado à direita) -->
+    <section class="bg-slate-900/90 border border-slate-800 rounded-lg shadow-lg overflow-hidden">
+      <div class="bg-slate-950/80 px-3.5 py-1.5 border-b border-slate-800 flex items-center justify-between">
+        <h2 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+          <span>⚖️</span> CENÁRIOS ELEITORAIS & PROBABILIDADE ESTIMADA
+        </h2>
+        <span class="text-[11px] text-slate-400 font-mono">Modelo Gaussiano Dinâmico</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-950/50 border-b border-slate-800 text-[11px] sm:text-xs font-bold text-slate-400">
+              <!-- Rótulo do Cenário Alinhado à Direita -->
+              <th class="py-1 px-3 sm:px-4 text-right">CENÁRIO</th>
+              <th class="py-1 px-3 sm:px-4 text-right w-52 sm:w-64 border-l border-slate-800">PROBABILIDADE</th>
+            </tr>
+          </thead>
+          <tbody id="cenariosCorpo" class="divide-y divide-slate-800/70 text-sm font-medium">
+            <!-- Cenários inseridos via JS na ordem exata solicitada -->
+            <tr class="text-slate-500">
+              <td colspan="2" class="py-4 text-center">Calculando probabilidades dos cenários...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. Barra Inferior: Última Atualização Obtida & Status do Sistema -->
+    <footer class="bg-slate-900/60 border border-slate-800/80 rounded-lg px-3.5 py-1 text-[11px] sm:text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 shadow-sm">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+        <span class="font-bold text-slate-300">ÚLTIMA ATUALIZAÇÃO:</span>
+        <span id="ultimaAtualizacao" class="text-slate-300 font-mono truncate max-w-lg">Conectando ao CDN do TSE...</span>
+      </div>
+      <div class="flex items-center gap-3 text-slate-400 font-mono text-[11px]">
+        <span id="cicloInfo">Ciclo: 1</span>
+        <span>•</span>
+        <span id="requisicoesInfo">Req: 0</span>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- JavaScript: Sincronização em Tempo Real (Zero Flicker) -->
+  <script>
+    async function atualizarDashboard() {
+      try {
+        const res = await fetch('/api/dados', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // 1. Relógio & Métricas de Infraestrutura
+        if (data.horario) document.getElementById('relogio').textContent = data.horario;
+        if (data.taxa_req !== undefined) document.getElementById('taxaReq').textContent = Number(data.taxa_req).toFixed(1) + ' req/s';
+        if (data.ciclo) document.getElementById('cicloInfo').textContent = 'Ciclo: ' + data.ciclo;
+        if (data.total_req !== undefined) document.getElementById('requisicoesInfo').textContent = 'Req: ' + Number(data.total_req).toLocaleString('pt-BR');
+        if (data.ultima_atualizacao) document.getElementById('ultimaAtualizacao').textContent = data.ultima_atualizacao;
+
+        // 2. Barra de Progresso Única de Eleitores
+        if (data.progresso) {
+          const ap = data.progresso.eleitores_apurados_fmt || '0';
+          const tot = data.progresso.eleitores_total_fmt || '0';
+          const pctStr = data.progresso.pct_apurado_fmt || '0,00%';
+          const pctNum = Math.max(0.1, Math.min(100, data.progresso.pct_apurado || 0));
+
+          document.getElementById('eleitoresTexto').textContent = `${ap} / ${tot}`;
+          document.getElementById('eleitoresPct').textContent = pctStr;
+          document.getElementById('barraProgresso').style.width = pctNum + '%';
+        }
+
+        // 3. Tabela de Candidatos e Projeção (Fontes Maiores e Espaçamento Compacto)
+        if (data.tabela && data.tabela.length > 0) {
+          const tbody = document.getElementById('tabelaCorpo');
+          let htmlTabela = '';
+
+          data.tabela.forEach(row => {
+            const isCand = row.is_cand;
+            const bgClass = isCand ? 'hover:bg-slate-800/40 transition' : 'bg-slate-950/40 text-slate-400 hover:bg-slate-800/30';
+            
+            // Cores sutis para deltas
+            let dvColor = 'text-slate-200';
+            if (row.delta_votos > 0) dvColor = 'text-emerald-400';
+            else if (row.delta_votos < 0) dvColor = 'text-rose-400';
+
+            let dpColor = 'text-slate-200';
+            if (row.delta_pp > 0) dpColor = 'text-emerald-400';
+            else if (row.delta_pp < 0) dpColor = 'text-rose-400';
+
+            const nomeFormatado = isCand 
+              ? `<span class="font-black text-white text-base sm:text-lg">${row.candidato}</span>`
+              : `<span class="font-bold text-slate-300 text-sm sm:text-base">${row.candidato}</span>`;
+
+            htmlTabela += `
+              <tr class="${bgClass}">
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4">${nomeFormatado}</td>
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4 text-right font-mono text-slate-100 font-bold text-base sm:text-lg">${row.apurados_fmt}</td>
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4 text-right font-mono border-l border-slate-800 font-bold text-base sm:text-lg ${dvColor}">${row.delta_votos_fmt}</td>
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4 text-right font-mono font-bold text-base sm:text-lg ${dpColor}">${row.delta_pp_fmt}</td>
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4 text-right font-mono border-l border-slate-800 font-black text-white text-base sm:text-lg">${row.projecao_votos_fmt}</td>
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4 text-right font-mono font-black text-cyan-300 text-lg sm:text-xl">${row.projecao_pct_fmt}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = htmlTabela;
+        }
+
+        // 4. Quadro de Cenários (Alinhados à Direita com Fontes Maiores)
+        if (data.cenarios && data.cenarios.length > 0) {
+          const cbody = document.getElementById('cenariosCorpo');
+          let htmlCenarios = '';
+
+          data.cenarios.forEach(sc => {
+            const probNum = sc.probabilidade || 0;
+            const probStr = sc.probabilidade_fmt || '00,00%';
+            
+            // Destaque visual sutil para probabilidade dominante
+            const isHigh = probNum >= 50.0;
+            const probBadgeColor = isHigh ? 'text-cyan-300' : 'text-slate-200';
+
+            htmlCenarios += `
+              <tr class="hover:bg-slate-800/30 transition">
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4 text-right font-bold text-slate-100 text-sm sm:text-base md:text-lg">
+                  ${sc.cenario}
+                </td>
+                <td class="py-1.5 sm:py-2 px-3 sm:px-4 text-right font-mono border-l border-slate-800">
+                  <div class="flex items-center justify-end gap-3 sm:gap-4">
+                    <div class="w-20 sm:w-28 bg-slate-950 rounded-full h-2.5 overflow-hidden border border-slate-800 hidden sm:block">
+                      <div class="bg-gradient-to-r from-blue-500 to-cyan-400 h-full rounded-full smooth-bar" style="width: ${probNum}%;"></div>
+                    </div>
+                    <span class="${probBadgeColor} font-black text-lg sm:text-xl md:text-2xl font-mono">${probStr}</span>
+                  </div>
+                </td>
+              </tr>
+            `;
+          });
+          cbody.innerHTML = htmlCenarios;
+        }
+
+      } catch (err) {
+        console.warn('Erro ao atualizar dashboard:', err);
+      }
+    }
+
+    // Disparo inicial imediato e polling suave a cada 2.5 segundos
+    atualizarDashboard();
+    setInterval(atualizarDashboard, 2500);
+  </script>
+
+</body>
+</html>
